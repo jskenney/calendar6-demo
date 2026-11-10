@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>Course calendar</title>
+<link rel="stylesheet" href="app/app.css">
+<script type="module" src="app/app.js"></script>
+</head>
+<body>
+<header class="site-header">
+  <div class="site-header-inner">
+    <a class="brand" href="#/">
+      <span class="brand-number" id="brand-number"></span>
+      <span class="brand-name" id="brand-name"></span>
+    </a>
+    <nav class="site-nav" id="site-nav" aria-label="Course"></nav>
+    <div class="site-tools">
+      <label class="section-picker" id="section-picker" hidden>
+        <span>Section</span>
+        <select id="section-select"></select>
+      </label>
+      <span class="viewer" id="viewer" hidden></span>
+    </div>
+  </div>
+</header>
+<main id="main" tabindex="-1">
+  <p class="status">Loading…</p>
+</main>
+<noscript><p class="status">This course site needs JavaScript.</p></noscript>
+</body>
+</html>
