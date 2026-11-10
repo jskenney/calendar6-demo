@@ -504,6 +504,7 @@ function upNext() {
         return h('article', {class: 'card ' + typeClass(ev.type)},
           h('div', {class: 'card-kind'}, eventName(ev), meetingText(item) && h('span', {class: 'card-time'}, meetingText(item))),
           h('h3', null, canOpen(ev) ? h('a', {href: eventRoute(item.event)}, ev.title || eventName(ev)) : (ev.title || eventName(ev))),
+          eventNotes(ev, 'cal-note card-note'),
           ev.boxes.length
             ? h('div', {class: 'box-links'}, ev.boxes.map(b => boxLink(item.event, b)))
             : h('p', {class: 'muted'}, 'Material is not available yet.'));
@@ -548,9 +549,21 @@ function eventChip(item, compact) {
     ? h('a', {class: cls, href: eventRoute(item.event)}, inner)
     : h('div', {class: cls, title: 'Not available yet'}, inner);
   const extras = ev.boxes.slice(1);
-  if (compact && extras.length === 0) return chip;
+  const notes = eventNotes(ev, 'cal-note');
+  if (compact && extras.length === 0 && notes.length === 0) return chip;
   return h('div', {class: 'chip-wrap'}, chip,
-    extras.length > 0 && h('div', {class: 'box-links small'}, extras.map(b => boxLink(item.event, b))));
+    extras.length > 0 && h('div', {class: 'box-links small'}, extras.map(b => boxLink(item.event, b))),
+    notes);
+}
+
+// An event's notes for the calendar: the text itself, with the file's name in front
+// when it is something other than plain notes ("Reading").
+function eventNotes(ev, cls) {
+  return (ev.notes || []).filter(n => n.text.trim()).map(n => {
+    const label = noteLabel(n.filename);
+    return h('div', {class: cls + (n.visible === false ? ' is-hidden-item' : ''), title: n.visible === false ? hiddenHint(n) : null},
+      label !== 'Notes' && h('span', {class: 'cal-note-label'}, label + ': '), noteContent(n.text));
+  });
 }
 
 function weeks() {

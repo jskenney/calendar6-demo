@@ -210,6 +210,14 @@ a.chip:hover { background: color-mix(in srgb, var(--tc) 20%, var(--surface)); }
 .chip.is-locked { background: none; border: 1px dashed var(--border); border-left: 3px solid color-mix(in srgb, var(--tc) 45%, transparent); color: var(--muted); }
 .chip.is-cancelled .chip-title { text-decoration: line-through; color: var(--muted); }
 
+/* an event's notes, under its chip */
+.cal-note { margin-top: 3px; padding: 0 2px 0 8px; font-size: 12px; line-height: 1.35; color: var(--muted); overflow-wrap: anywhere; }
+.cal-note-label { font-weight: 700; }
+.cal-note.is-hidden-item { border-left: 1px dashed var(--muted); }
+.day .cal-note { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 4; overflow: hidden; }
+.list-item .cal-note { font-size: 13.5px; padding-left: 13px; }
+.card-note { font-size: 14px; padding: 0; margin: -4px 0 10px; color: var(--text); }
+
 /* ---------- week grid ---------- */
 
 .grid {
@@ -387,7 +395,7 @@ a.step:hover { border-color: var(--accent); color: var(--accent); }
   .grid-head, .week { grid-template-columns: 34px repeat(var(--cols), minmax(0, 1fr)); }
   .day { padding: 3px; min-height: 70px; }
   .day .chip { padding: 3px 4px; font-size: 11.5px; }
-  .day .chip-time, .day .box-links { display: none; }
+  .day .chip-time, .day .box-links, .day .cal-note { display: none; }
   .day-label { font-size: 10px; }
   .gutter-week { font-size: 9.5px; }
   .event-head { padding: 12px 14px 0; }
