@@ -163,6 +163,22 @@ function renderChrome() {
   );
   markNav();
 
+  // one menu per event type calendar.php names in "dropdown", to jump straight to an event
+  document.getElementById('event-menus').replaceChildren(
+    ...(cal.dropdown || []).filter(type => config.types[type]).map(type => {
+      const events = Object.entries(cal.events)
+        .filter(([, e]) => e.type === type)
+        .sort(([, a], [, b]) => a.number - b.number || (a.date || '9').localeCompare(b.date || '9'));
+      return h('select', {
+        class: 'event-menu', 'data-type': type, 'aria-label': 'Go to a ' + typeLabel(type),
+        onchange: e => { if (e.target.value) location.hash = eventRoute(e.target.value); },
+      },
+        h('option', {value: ''}, typeLabel(type)),
+        events.map(([id, e]) => h('option', {value: id, disabled: !canOpen(e)},
+          `${e.number}. ${e.title}${e.date ? ' · ' + fmt(e.date, {month: 'short', day: 'numeric'}) : ''}`)));
+    }));
+  markEventMenus();
+
   const picker = document.getElementById('section-picker');
   const select = document.getElementById('section-select');
   picker.hidden = config.sections.length === 0;
@@ -175,6 +191,16 @@ function renderChrome() {
   const viewer = document.getElementById('viewer');
   viewer.hidden = !cal.viewer.user;
   viewer.textContent = cal.viewer.user ? cal.viewer.user + (cal.viewer.instructor ? ' (instructor)' : '') : '';
+}
+
+// Each menu shows the event being read, or just its type's name.
+let currentEvent = '';
+function markEventMenus(id) {
+  if (id !== undefined) currentEvent = id;
+  for (const menu of document.querySelectorAll('.event-menu')) {
+    menu.value = state.cal.events[currentEvent]?.type === menu.dataset.type ? currentEvent : '';
+    if (menu.selectedIndex < 0) menu.value = '';
+  }
 }
 
 let currentNav = 'calendar';
@@ -210,6 +236,7 @@ function route(keepScroll) {
   const token = ++navToken;
   const {parts, query, anchor} = parseRoute();
   if (state.onCalendar) state.calScroll = scrollY;
+  markEventMenus('');
   state.onCalendar = false;
 
   if (parts.length === 0 || parts[0] === 'calendar') {
@@ -529,6 +556,7 @@ function noteContent(text) {
 function showEvent(token, id, boxId, query, anchor) {
   const ev = state.cal.events[id];
   markNav('calendar');
+  markEventMenus(id);
   if (!ev) {
     main.replaceChildren(notice('Event not found', 'This event is not on the calendar (it may have moved).'));
     return;
@@ -788,3 +816,8 @@ async function start() {
 }
 
 start();
+
+// The header wraps on narrow screens: keep the sticky offsets below it in step.
+new ResizeObserver(([entry]) => {
+  document.documentElement.style.setProperty('--header-h', Math.round(entry.target.offsetHeight) + 'px');
+}).observe(document.querySelector('.site-header'));

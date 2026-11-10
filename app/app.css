@@ -86,6 +86,9 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 64px; outline: none
 .site-nav a[aria-current] { color: var(--accent); background: var(--accent-soft); }
 .site-tools { display: flex; align-items: center; gap: 12px; }
 .section-picker { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.event-menus { display: flex; gap: 6px; }
+.event-menu { max-width: 9.5rem; text-overflow: ellipsis; font-weight: 500; }
+.event-menu,
 .section-picker select {
   font: inherit; font-size: 14px; padding: 5px 8px; border-radius: 8px;
   border: 1px solid var(--border); background: var(--surface); color: var(--text);
@@ -326,7 +329,10 @@ a.step:hover { border-color: var(--accent); color: var(--accent); }
 @media (max-width: 760px) {
   .site-header-inner { flex-wrap: wrap; gap: 4px 12px; padding-top: 8px; padding-bottom: 6px; }
   .brand-name { display: none; }
-  .site-tools { margin-left: auto; }
+  .site-tools { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+  .section-picker > span { display: none; }
+  .event-menu { max-width: 6.2rem; }
+  :root { --header-h: 96px; }
   .site-nav { order: 3; flex-basis: 100%; }
   :root { --header-h: 88px; }
   .search { margin-left: 0; flex: 1 1 100%; }
