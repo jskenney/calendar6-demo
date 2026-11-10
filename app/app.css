@@ -82,6 +82,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 64px; outline: none
   font-size: 14px; font-weight: 500; white-space: nowrap;
 }
 .site-nav a:hover { color: var(--text); background: var(--surface-2); }
+.site-nav a.is-unavailable { opacity: .55; }
 .site-nav a[aria-current] { color: var(--accent); background: var(--accent-soft); }
 .site-tools { display: flex; align-items: center; gap: 12px; }
 .section-picker { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }

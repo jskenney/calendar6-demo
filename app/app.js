@@ -157,8 +157,9 @@ function renderChrome() {
   const nav = document.getElementById('site-nav');
   nav.replaceChildren(
     h('a', {href: '#/', 'data-nav': 'calendar'}, 'Calendar'),
-    ...config.pages.filter(p => cal.pages[p.page]?.key).map(p =>
-      h('a', {href: '#/page/' + encodeURIComponent(p.page), 'data-nav': 'page:' + p.page}, p.label)),
+    // every page calendar.php lists, in its order; one without a key can not be opened yet
+    ...Object.entries(cal.pages).map(([name, page]) =>
+      h('a', {href: '#/page/' + encodeURIComponent(name), 'data-nav': 'page:' + name, class: page.key ? null : 'is-unavailable'}, page.title || name)),
   );
   markNav();
 
@@ -225,6 +226,11 @@ function route(keepScroll) {
   if (parts[0] === 'page' && parts[1]) {
     const page = state.cal.pages[parts[1]];
     if (page?.key) return showDoc(token, {key: page.key, query, anchor, page: parts[1]});
+    if (page) {
+      markNav('page:' + parts[1]);
+      main.replaceChildren(notice(page.title, 'This page is not available to you yet.'));
+      return;
+    }
   }
   if (parts[0] === 'view' && parts[1]) {
     const known = state.keys.get(parts[1]);
