@@ -71,12 +71,12 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 64px; outline: none
 }
 .site-header-inner {
   max-width: 1280px; margin: 0 auto; padding: 0 16px; min-height: 56px;
-  display: flex; align-items: center; gap: 20px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0 20px;
 }
 .brand { display: flex; align-items: baseline; gap: 10px; text-decoration: none; color: var(--text); white-space: nowrap; }
 .brand-number { font-weight: 700; font-size: 18px; letter-spacing: .01em; }
 .brand-name { color: var(--muted); font-size: 14px; }
-.site-nav { display: flex; gap: 2px; flex: 1; overflow-x: auto; scrollbar-width: none; }
+.site-nav { display: flex; gap: 2px; flex: 1 0 auto; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
 .site-nav a {
   padding: 6px 12px; border-radius: 8px; color: var(--muted); text-decoration: none;
   font-size: 14px; font-weight: 500; white-space: nowrap;
@@ -84,16 +84,47 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 64px; outline: none
 .site-nav a:hover { color: var(--text); background: var(--surface-2); }
 .site-nav a.is-unavailable { opacity: .55; }
 .site-nav a[aria-current] { color: var(--accent); background: var(--accent-soft); }
-.site-tools { display: flex; align-items: center; gap: 12px; }
+.site-tools { display: flex; align-items: center; gap: 12px; margin-left: auto; padding: 8px 0; }
 .section-picker { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
 .event-menus { display: flex; gap: 6px; }
-.event-menu { max-width: 9.5rem; text-overflow: ellipsis; font-weight: 500; }
+.event-menu { max-width: 7.5rem; text-overflow: ellipsis; font-weight: 500; }
 .event-menu,
 .section-picker select {
   font: inherit; font-size: 14px; padding: 5px 8px; border-radius: 8px;
   border: 1px solid var(--border); background: var(--surface); color: var(--text);
 }
-.viewer { font-size: 13px; color: var(--muted); }
+.viewer { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.viewer-name { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.viewer-role { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; padding: 1px 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }
+.button.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); }
+.button.primary:hover { background: var(--accent); filter: brightness(1.1); }
+.button:disabled { opacity: .6; cursor: default; }
+
+/* ---------- log in ---------- */
+
+.login { width: min(380px, calc(100vw - 32px)); padding: 0; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); color: var(--text); box-shadow: 0 20px 50px rgb(0 0 0 / 25%); }
+.login::backdrop { background: rgb(10 15 25 / 45%); backdrop-filter: blur(2px); }
+.login form { display: flex; flex-direction: column; gap: 12px; padding: 22px; }
+.login h2 { margin: 0; font-size: 20px; }
+.login-hint { margin: -6px 0 2px; font-size: 13px; color: var(--muted); }
+.login label { display: flex; flex-direction: column; gap: 4px; font-size: 13px; font-weight: 600; }
+.login input { font: inherit; font-size: 16px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); }
+.login-error { margin: 0; font-size: 14px; color: #b42318; }
+.login-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 4px; }
+.notice-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+
+/* ---------- instructors ---------- */
+
+.chip-hidden { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); border: 1px dashed var(--muted); border-radius: 4px; padding: 0 4px; margin-left: 6px; }
+.instructor { margin-top: 20px; background: var(--surface); border: 1px dashed var(--border); border-radius: var(--radius); padding: 14px 18px; }
+.instructor h2 { margin: 0 0 8px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.instructor details + details { margin-top: 10px; }
+.instructor summary { cursor: pointer; font-weight: 600; }
+.instructor p { margin: 6px 0; font-size: 14px; }
+.problems { margin: 8px 0 0; padding-left: 20px; font-size: 14px; }
+.problems li { margin: 4px 0; }
+.problems code { margin-left: 8px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.undated { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; margin-top: 8px; }
 
 /* ---------- up next ---------- */
 

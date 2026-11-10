@@ -22,13 +22,30 @@
         <span>Section</span>
         <select id="section-select"></select>
       </label>
-      <span class="viewer" id="viewer" hidden></span>
+      <div class="viewer" id="viewer"></div>
     </div>
   </div>
 </header>
 <main id="main" tabindex="-1">
   <p class="status">Loading…</p>
 </main>
+<dialog class="login" id="login">
+  <form id="login-form" method="dialog">
+    <h2>Log in</h2>
+    <p class="login-hint">For instructors and course staff. Students do not need to log in.</p>
+    <label>Username
+      <input name="username" autocomplete="username" autocapitalize="none" spellcheck="false" required maxlength="64">
+    </label>
+    <label>Password
+      <input name="password" type="password" autocomplete="current-password" required>
+    </label>
+    <p class="login-error" id="login-error" role="alert" hidden></p>
+    <div class="login-actions">
+      <button class="button" type="button" id="login-cancel">Cancel</button>
+      <button class="button primary" type="submit" id="login-submit">Log in</button>
+    </div>
+  </form>
+</dialog>
 <noscript><p class="status">This course site needs JavaScript.</p></noscript>
 </body>
 </html>

@@ -130,17 +130,113 @@ async function loadCalendar() {
 
 async function refresh() {
   try {
-    await loadConfig();
-    const changed = await loadCalendar();
+    const before = state.config.viewer.user;
+    const [, changed] = await Promise.all([loadConfig(), loadCalendar()]);
     renderChrome();
-    if (changed && state.onCalendar) renderCalendar();
+    if (before !== state.config.viewer.user) route(true);     // the login ended (or began in another tab)
+    else if (changed && state.onCalendar) renderCalendar();
   } catch { /* keep showing what we have */ }
+}
+
+/* ---------- logging in and out (auth.php) ---------- */
+
+const login = {
+  dialog: document.getElementById('login'),
+  form: document.getElementById('login-form'),
+  error: document.getElementById('login-error'),
+  submit: document.getElementById('login-submit'),
+  csrf: null,
+};
+
+async function fetchCsrf() {
+  login.csrf = (await (await api('config.php?csrf=1')).json()).csrf;
+}
+
+function openLogin() {
+  login.error.hidden = true;
+  login.form.reset();
+  login.dialog.showModal();
+  fetchCsrf().catch(() => { /* asked for again when the form is sent */ });
+}
+
+function loginError(text) {
+  login.error.textContent = text;
+  login.error.hidden = false;
+}
+
+async function post(body) {
+  const r = await fetch(API + 'auth.php', {
+    method: 'POST', credentials: 'same-origin',
+    headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body),
+  });
+  let answer = {};
+  try { answer = await r.json(); } catch { /* not JSON */ }
+  if (answer.csrf) login.csrf = answer.csrf;
+  return {status: r.status, answer, retryAfter: +r.headers.get('Retry-After') || 0};
+}
+
+login.form.addEventListener('submit', async e => {
+  e.preventDefault();
+  const data = new FormData(login.form);
+  const body = () => ({username: data.get('username').trim(), password: data.get('password'), csrf: login.csrf});
+  login.submit.disabled = true;
+  login.error.hidden = true;
+  try {
+    if (!login.csrf) await fetchCsrf();
+    let r = await post(body());
+    if (r.status === 403) {               // the token expired: get a new one and try once more
+      await fetchCsrf();
+      r = await post(body());
+    }
+    if (r.status === 200 && r.answer.user) {
+      login.dialog.close();
+      login.form.reset();
+      await viewerChanged();
+    } else if (r.status === 429) {
+      const minutes = Math.ceil(r.retryAfter / 60);
+      loginError(`Too many attempts. Try again ${minutes ? `in ${minutes} minute${minutes === 1 ? '' : 's'}` : 'later'}.`);
+    } else if (r.status === 401) {
+      loginError(r.answer.error || 'Wrong username or password.');
+      login.form.elements.password.select();
+    } else {
+      loginError(r.answer.error || 'Logging in is not possible right now.');
+    }
+  } catch {
+    loginError('The server did not answer. Check your connection.');
+  } finally {
+    login.submit.disabled = false;
+  }
+});
+document.getElementById('login-cancel').addEventListener('click', () => login.dialog.close());
+
+async function logout() {
+  try { await api('auth.php'); } catch { /* the reload below shows who we are now */ }
+  login.csrf = null;
+  await viewerChanged();
+}
+
+// After any change of login: everything the viewer may see can be different.
+async function viewerChanged() {
+  await Promise.all([loadConfig(), loadCalendar()]);
+  renderChrome();
+  route(true);
+}
+
+// When the login ends by itself, show the site as the anonymous viewer it now is.
+let expiryTimer = 0;
+function scheduleExpiry(validUntil) {
+  clearTimeout(expiryTimer);
+  if (!validUntil) return;
+  const ms = new Date(validUntil) - Date.now() + 1500;
+  if (ms < 2 ** 31) expiryTimer = setTimeout(refresh, Math.max(ms, 0));
 }
 
 const typeLabel = type => state.config.types[type]?.label || type;
 const typeClass = type => 't' + Math.max(0, Object.keys(state.config.types).indexOf(type)) % 6;
 const boxLabel = id => state.config.boxes.find(b => b.box === id)?.label || id;
 const eventName = ev => `${typeLabel(ev.type)} ${ev.number}`;
+// For logged-on viewers: they can open this event, students can not open any of it yet.
+const hiddenFromStudents = ev => ev.boxes.length > 0 && ev.boxes.every(b => b.visible === false);
 const canOpen = ev => ev.boxes.length > 0 || (ev.notes || []).some(n => n.text.trim());
 
 function boxHref(eventId, box) {
@@ -188,9 +284,13 @@ function renderChrome() {
   );
   select.value = state.section;
 
-  const viewer = document.getElementById('viewer');
-  viewer.hidden = !cal.viewer.user;
-  viewer.textContent = cal.viewer.user ? cal.viewer.user + (cal.viewer.instructor ? ' (instructor)' : '') : '';
+  const who = config.viewer;
+  document.getElementById('viewer').replaceChildren(...(who.user
+    ? [h('span', {class: 'viewer-name', title: who.valid_until ? 'Logged in until ' + new Date(who.valid_until).toLocaleString() : null},
+        who.user, who.instructor && h('span', {class: 'viewer-role'}, 'Instructor')),
+      h('button', {class: 'button', type: 'button', onclick: logout}, 'Log out')]
+    : [h('button', {class: 'button', type: 'button', onclick: openLogin}, 'Log in')]));
+  scheduleExpiry(who.valid_until);
 }
 
 // Each menu shows the event being read, or just its type's name.
@@ -268,11 +368,13 @@ function route(keepScroll) {
   main.replaceChildren(notice('Page not found', 'That address does not match anything on this site.'));
 }
 
-function notice(title, text) {
+function notice(title, text, offerLogin) {
   return h('div', {class: 'notice'},
     h('h1', null, title),
     h('p', null, text),
-    h('p', null, h('a', {class: 'button', href: '#/'}, 'Back to the calendar')));
+    h('p', {class: 'notice-actions'},
+      h('a', {class: 'button', href: '#/'}, 'Back to the calendar'),
+      offerLogin && h('button', {class: 'button', type: 'button', onclick: openLogin}, 'Log in')));
 }
 
 /* ---------- calendar ---------- */
@@ -308,12 +410,30 @@ function renderCalendar() {
     }));
 
   const body = h('div', {id: 'cal-body'});
-  main.replaceChildren(upNext(), toolbar, body);
+  main.replaceChildren(upNext() || '', toolbar, body, instructorPanel() || '');
   renderBody();
 
   function renderBody() {
     body.replaceChildren(state.view === 'grid' ? renderGrid() : renderList());
   }
+}
+
+// Instructors: what calendar.php reports as wrong, and material that has no day.
+function instructorPanel() {
+  const {cal} = state;
+  if (!cal.viewer.instructor) return null;
+  const problems = cal.problems || [];
+  const undated = Object.entries(cal.events).filter(([, e]) => !e.date);
+  return h('section', {class: 'instructor'},
+    h('h2', null, 'Instructor'),
+    h('details', null,
+      h('summary', null, problems.length ? `${problems.length} problem${problems.length === 1 ? '' : 's'} to look at` : 'No problems found'),
+      problems.length > 0 && h('ul', {class: 'problems'}, problems.map(p => h('li', null,
+        h('span', null, p.message), p.file && h('code', null, p.file + (p.line ? ':' + p.line : '')))))),
+    undated.length > 0 && h('details', {open: true},
+      h('summary', null, `${undated.length} event${undated.length === 1 ? '' : 's'} not on the calendar`),
+      h('p', {class: 'muted'}, 'There are more folders than days for these; only instructors see them.'),
+      h('div', {class: 'undated'}, undated.map(([id, ev]) => eventChip({event: id, ...ev}, false)))));
 }
 
 function scrollToToday(smooth) {
@@ -372,6 +492,7 @@ function eventChip(item, compact) {
     h('span', {class: 'chip-kind'}, eventName(ev)),
     item.start && !item.cancelled && h('span', {class: 'chip-time'}, item.start),
     item.cancelled && h('span', {class: 'chip-flag'}, 'Cancelled'),
+    hiddenFromStudents(ev) && h('span', {class: 'chip-hidden', title: ev.opens ? hiddenHint(ev) : 'Students can not open anything in this event'}, 'Hidden'),
     h('span', {class: 'chip-title'}, ev.title),
   ];
   const cls = `chip ${typeClass(ev.type)}${open ? '' : ' is-locked'}${item.cancelled ? ' is-cancelled' : ''}`;
@@ -602,7 +723,7 @@ async function showDoc(token, {key, query, anchor, header, page}) {
   } catch (e) {
     if (token !== navToken) return;
     article.replaceChildren(e.status === 404
-      ? notice('Not available', 'This page does not exist, or it has not been released yet.')
+      ? notice('Not available', 'This page does not exist, or it has not been released yet.', !state.config.viewer.user)
       : notice('Something went wrong', e.message));
     return;
   }
