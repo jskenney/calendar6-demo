@@ -37,7 +37,7 @@ Then open <http://localhost:8000/>. PHP 8.3 or newer.
 | Endpoint | Used for |
 |---|---|
 | `config.php` | course name, event types, box labels and order, pages menu, sections, period schedule labels |
-| `calendar.php[?section=N]` | every day and event, and the keys of the files this viewer may open; fetched again when the tab becomes visible and every 5 minutes |
+| `calendar.php[?section=N]` | the page links (`pages`) and the Events menu (`dropdown`) in the top bar; every day and event, and the keys of the files this viewer may open; fetched again when the tab becomes visible and every 5 minutes |
 | `html.php?file=KEY` | every course page (event pages, home, resources, syllabus), parsed and placed in the app |
 | `get.php?file=KEY` | every other file: links inside pages (already rewritten by `html.php`) and non-page boxes such as PDFs |
 | `auth.php` | the "Log in" form (with a token from `config.php?csrf=1`) and "Log out"; afterwards `config.php` and `calendar.php` are fetched again |

@@ -259,30 +259,7 @@ function renderChrome() {
   );
   markNav();
 
-  // one menu per event type calendar.php names in "dropdown", to jump straight to an event
-  document.getElementById('event-menus').replaceChildren(
-    ...(cal.dropdown || []).filter(type => config.types[type]).map(type => {
-      const events = Object.entries(cal.events)
-        .filter(([, e]) => e.type === type)
-        .sort(([, a], [, b]) => a.number - b.number || (a.date || '9').localeCompare(b.date || '9'));
-      return h('select', {
-        class: 'event-menu', 'data-type': type, 'aria-label': 'Go to a ' + typeLabel(type),
-        onchange: e => { if (e.target.value) location.hash = eventRoute(e.target.value); },
-      },
-        h('option', {value: ''}, typeLabel(type)),
-        events.map(([id, e]) => h('option', {value: id, disabled: !canOpen(e)},
-          `${e.number}. ${e.title}${e.date ? ' · ' + fmt(e.date, {month: 'short', day: 'numeric'}) : ''}`)));
-    }));
-  markEventMenus();
-
-  const picker = document.getElementById('section-picker');
-  const select = document.getElementById('section-select');
-  picker.hidden = config.sections.length === 0;
-  select.replaceChildren(
-    h('option', {value: ''}, 'All (no times)'),
-    ...config.sections.map(s => h('option', {value: s.section}, s.instructor ? `${s.section} · ${s.instructor}` : s.section)),
-  );
-  select.value = state.section;
+  renderMenu();
 
   const who = config.viewer;
   document.getElementById('viewer').replaceChildren(...(who.user
@@ -293,15 +270,85 @@ function renderChrome() {
   scheduleExpiry(who.valid_until);
 }
 
-// Each menu shows the event being read, or just its type's name.
+// One menu for getting around: the events of each type calendar.php names in "dropdown",
+// in that order, each under its own heading, and the section choice at the bottom.
+const menu = {
+  root: document.getElementById('menu'),
+  button: document.getElementById('menu-button'),
+  panel: document.getElementById('menu-panel'),
+};
 let currentEvent = '';
+
+function renderMenu() {
+  const {config, cal} = state;
+  const types = (cal.dropdown || []).filter(type => config.types[type]);
+  menu.root.hidden = types.length === 0 && config.sections.length === 0;
+  menu.button.replaceChildren(types.length ? 'Events' : 'Section',
+    state.section && h('span', {class: 'menu-section'}, state.section), h('span', {class: 'caret', 'aria-hidden': 'true'}, '▾'));
+
+  const scroll = menu.panel.scrollTop;
+  menu.panel.replaceChildren(
+    ...types.map(type => {
+      const events = Object.entries(cal.events)
+        .filter(([, e]) => e.type === type)
+        .sort(([, a], [, b]) => a.number - b.number || (a.date || '9').localeCompare(b.date || '9'));
+      return h('section', {class: typeClass(type)},
+        h('h3', null, typeLabel(type)),
+        events.length === 0 && h('div', {class: 'menu-item is-disabled'}, 'Nothing yet'),
+        events.map(([id, e]) => {
+          const inner = [
+            h('span', {class: 'menu-num'}, String(e.number)),
+            h('span', {class: 'menu-title'}, e.title || eventName(e)),
+            e.date && h('span', {class: 'menu-date'}, fmt(e.date, {month: 'short', day: 'numeric'})),
+          ];
+          return canOpen(e)
+            ? h('a', {class: 'menu-item', href: eventRoute(id), 'data-event': id, onclick: closeMenu}, inner)
+            : h('div', {class: 'menu-item is-disabled', title: 'Not available yet'}, inner);
+        }));
+    }),
+    config.sections.length > 0 && h('section', {class: 'menu-sections'},
+      h('h3', null, 'Section'),
+      [{section: '', label: 'All sections (no times)'}, ...config.sections].map(s => h('button', {
+        class: 'menu-item', type: 'button', role: 'menuitemradio', 'aria-checked': String(state.section === s.section),
+        onclick: () => { closeMenu(); setSection(s.section); },
+      },
+        h('span', {class: 'menu-num'}, state.section === s.section ? '✓' : ''),
+        h('span', {class: 'menu-title'}, s.label || s.section),
+        s.instructor && h('span', {class: 'menu-date'}, s.instructor)))),
+  );
+  menu.panel.scrollTop = scroll;
+  markEventMenus();
+}
+
+// The event being read is marked in the menu.
 function markEventMenus(id) {
   if (id !== undefined) currentEvent = id;
-  for (const menu of document.querySelectorAll('.event-menu')) {
-    menu.value = state.cal.events[currentEvent]?.type === menu.dataset.type ? currentEvent : '';
-    if (menu.selectedIndex < 0) menu.value = '';
+  for (const item of menu.panel.querySelectorAll('[data-event]')) {
+    if (item.dataset.event === currentEvent) item.setAttribute('aria-current', 'page');
+    else item.removeAttribute('aria-current');
   }
 }
+
+function openMenu() {
+  menu.panel.hidden = false;
+  menu.button.setAttribute('aria-expanded', 'true');
+  // start at the event being read, else at the next one coming up
+  const t = today();
+  const target = menu.panel.querySelector('[aria-current]')
+    || [...menu.panel.querySelectorAll('[data-event]')].find(a => (state.cal.events[a.dataset.event]?.date || '') >= t);
+  if (target) menu.panel.scrollTop = target.offsetTop - menu.panel.clientHeight / 2;
+}
+
+function closeMenu() {
+  menu.panel.hidden = true;
+  menu.button.setAttribute('aria-expanded', 'false');
+}
+
+menu.button.addEventListener('click', () => (menu.panel.hidden ? openMenu() : closeMenu()));
+document.addEventListener('click', e => { if (!menu.root.contains(e.target)) closeMenu(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !menu.panel.hidden) { closeMenu(); menu.button.focus(); }
+});
 
 let currentNav = 'calendar';
 function markNav(name) {
@@ -312,12 +359,13 @@ function markNav(name) {
   }
 }
 
-document.getElementById('section-select').addEventListener('change', async e => {
-  state.section = e.target.value;
-  store('section', state.section);
+async function setSection(section) {
+  state.section = section;
+  store('section', section);
   await loadCalendar();
+  renderChrome();
   route(true);
-});
+}
 
 /* ---------- routing ---------- */
 
