@@ -3,7 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
+<script>
+// The theme, before anything is drawn: the visitor's own choice, else the system's.
+(function () {
+  var t = null;
+  try { t = localStorage.getItem('cal6.theme'); } catch (e) {}
+  if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', t);
+})();
+</script>
 <title>Course calendar</title>
 <link rel="stylesheet" href="app/app.css">
 <script type="module" src="app/app.js"></script>
@@ -21,6 +29,7 @@
         <button class="button menu-button" id="menu-button" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="menu-panel"></button>
         <div class="menu-panel" id="menu-panel" hidden></div>
       </div>
+      <button class="button theme-button" id="theme-button" type="button"></button>
       <div class="viewer" id="viewer"></div>
     </div>
   </div>

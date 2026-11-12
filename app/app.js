@@ -952,8 +952,9 @@ async function enhance(article) {
     try {
       if (!window.hljs) {
         document.head.append(
-          h('link', {rel: 'stylesheet', href: LIBS.hljsLight, media: '(prefers-color-scheme: light)'}),
-          h('link', {rel: 'stylesheet', href: LIBS.hljsDark, media: '(prefers-color-scheme: dark)'}));
+          h('link', {rel: 'stylesheet', href: LIBS.hljsLight, 'data-code-theme': 'light'}),
+          h('link', {rel: 'stylesheet', href: LIBS.hljsDark, 'data-code-theme': 'dark'}));
+        applyTheme();
         await loadScript(LIBS.hljs);
         window.hljs.configure({ignoreUnescapedHTML: true});
       }
@@ -973,6 +974,30 @@ async function enhance(article) {
     } catch { /* the page is still readable without it */ }
   }
 }
+
+/* ---------- light and dark ---------- */
+
+// index.html sets data-theme before the first paint (the stored choice, else the system's);
+// the button switches it and remembers the choice. Until a choice is made, the system leads.
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
+const themeButton = document.getElementById('theme-button');
+
+function applyTheme(theme = document.documentElement.dataset.theme) {
+  const dark = theme === 'dark';
+  document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+  themeButton.textContent = dark ? '☀' : '☾';
+  themeButton.title = dark ? 'Switch to light mode' : 'Switch to dark mode';
+  themeButton.setAttribute('aria-label', themeButton.title);
+  for (const link of document.querySelectorAll('link[data-code-theme]')) link.disabled = link.dataset.codeTheme !== (dark ? 'dark' : 'light');
+}
+
+themeButton.addEventListener('click', () => {
+  const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  store('theme', theme);
+  applyTheme(theme);
+});
+systemDark.addEventListener('change', () => { if (!store('theme')) applyTheme(systemDark.matches ? 'dark' : 'light'); });
+applyTheme();
 
 /* ---------- start ---------- */
 

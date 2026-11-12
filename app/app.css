@@ -1,6 +1,7 @@
 /* Calendar 6 front end */
 
 :root {
+  color-scheme: light;
   --bg: #f6f7f9;
   --surface: #ffffff;
   --surface-2: #f0f2f5;
@@ -16,27 +17,24 @@
   --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0f1420;
-    --surface: #171d2b;
-    --surface-2: #1f2637;
-    --text: #e6e9ef;
-    --muted: #98a2b3;
-    --border: #2a3245;
-    --accent: #8ab0ff;
-    --accent-soft: #1e2a47;
-    --shadow: 0 1px 2px rgb(0 0 0 / 40%);
-  }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1420;
+  --surface: #171d2b;
+  --surface-2: #1f2637;
+  --text: #e6e9ef;
+  --muted: #98a2b3;
+  --border: #2a3245;
+  --accent: #8ab0ff;
+  --accent-soft: #1e2a47;
+  --shadow: 0 1px 2px rgb(0 0 0 / 40%);
 }
 
 /* event type colours, by the type's position in config.php -> types */
 .t0 { --tc: #2563eb; } .t1 { --tc: #059669; } .t2 { --tc: #c2410c; }
 .t3 { --tc: #be123c; } .t4 { --tc: #7c3aed; } .t5 { --tc: #0e7490; }
-@media (prefers-color-scheme: dark) {
-  .t0 { --tc: #6ea0ff; } .t1 { --tc: #34d399; } .t2 { --tc: #fb923c; }
-  .t3 { --tc: #fb7185; } .t4 { --tc: #a78bfa; } .t5 { --tc: #22d3ee; }
-}
+[data-theme="dark"] .t0 { --tc: #6ea0ff; } [data-theme="dark"] .t1 { --tc: #34d399; } [data-theme="dark"] .t2 { --tc: #fb923c; }
+[data-theme="dark"] .t3 { --tc: #fb7185; } [data-theme="dark"] .t4 { --tc: #a78bfa; } [data-theme="dark"] .t5 { --tc: #22d3ee; }
 
 * { box-sizing: border-box; }
 html { scroll-padding-top: calc(var(--header-h) + 16px); }
@@ -85,6 +83,7 @@ main { max-width: 1280px; margin: 0 auto; padding: 20px 16px 64px; outline: none
 .site-nav a.is-unavailable { opacity: .55; }
 .site-nav a[aria-current] { color: var(--accent); background: var(--accent-soft); }
 .site-tools { display: flex; align-items: center; gap: 12px; margin-left: auto; padding: 8px 0; }
+.theme-button { width: 34px; justify-content: center; padding: 6px 0; font-size: 15px; line-height: 1.25; }
 .menu { position: relative; }
 .menu-button .caret { color: var(--muted); font-size: 11px; }
 .menu-section { font-size: 11.5px; font-weight: 700; padding: 0 6px; border-radius: 999px; background: var(--accent-soft); color: var(--accent); }

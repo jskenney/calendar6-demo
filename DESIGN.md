@@ -148,8 +148,8 @@ each setting `--tc`), so a course with different type names is coloured without 
 The bar is sticky and holds, left to right:
 
 ```
-[ SD321  Data Storage ]  [ Calendar | Home | Resources | Syllabus ]        [ Events ▾ ] [ Log in ]
-   brand                    page links                                        menu         viewer
+[ SD321  Data Storage ]  [ Calendar | Home | Resources | Syllabus ]        [ Events ▾ ] [ ☾ ] [ Log in ]
+   brand                    page links                                        menu       theme   viewer
 ```
 
 | Part | Comes from | Behaviour |
@@ -158,6 +158,7 @@ The bar is sticky and holds, left to right:
 | Calendar | fixed | always first |
 | Page links | **`calendar.php` → `pages`**, every entry, in its order, labelled with its `title` | `#/page/<name>`; a page without a `key` (the viewer may not open it) is shown dimmed and leads to a short notice |
 | Events menu | **`calendar.php` → `dropdown`**, and `config.php` → `sections` | see below; hidden when there are neither types nor sections |
+| Theme | the visitor's choice (`localStorage`), else the system's setting | switches between light and dark; a small script in `index.html` sets `data-theme` on `<html>` before the first paint, so there is no flash, and all colours hang off that attribute |
 | Viewer | `config.php` → `viewer` | "Log in", or the username (with an "Instructor" tag) and "Log out" |
 
 **The Events menu** is a single button opening one panel, built as a custom panel rather
